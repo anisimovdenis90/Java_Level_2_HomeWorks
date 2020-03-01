@@ -17,10 +17,14 @@ public class Array {
         int sum = 0;
         int element;
 
-        if (array.length != RIGHT_LENGTH
-                || array[0].length != RIGHT_LENGTH || array[1].length != RIGHT_LENGTH
-                || array[2].length != RIGHT_LENGTH || array[3].length != RIGHT_LENGTH) {
-            throw new MyArraySizeException(array.length, array[0].length, 4);
+        if (array.length != RIGHT_LENGTH) {
+            throw new MyArraySizeException(RIGHT_LENGTH);
+        }
+
+        for (String[] arrayElement : array) {
+            if (arrayElement.length != RIGHT_LENGTH) {
+                throw new MyArraySizeException(RIGHT_LENGTH);
+            }
         }
 
         for (int i = 0; i < array.length; i++) {

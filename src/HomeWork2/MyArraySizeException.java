@@ -6,9 +6,6 @@ package HomeWork2;
 public class MyArraySizeException extends RuntimeException {
     // Текстовое сообщение исключения
     private String message;
-    // Величины размерности неправильного массива
-    private int wrongOneLength;
-    private int wrongTwoLength;
     // Величины размерности правильного массива
     private int rightOneLength;
     private int rightTwoLength;
@@ -21,25 +18,23 @@ public class MyArraySizeException extends RuntimeException {
     }
 
     // Собственные конструкторы класса:
-    public MyArraySizeException(String message, int wrongOneLength, int wrongTwoLength, int rightOneLength) {
+    public MyArraySizeException(String message, int rightOneLength) {
         this.message = message;
-        this.wrongOneLength = wrongOneLength;
-        this.wrongTwoLength = wrongTwoLength;
         this.rightOneLength = rightOneLength;
         this.rightTwoLength = rightOneLength;
     }
 
-    public MyArraySizeException(String message, int wrongOneLength, int wrongTwoLength, int rightOneLength, int rightTwoLength) {
-        this(message, wrongOneLength, wrongTwoLength, rightOneLength);
+    public MyArraySizeException(String message, int rightOneLength, int rightTwoLength) {
+        this(message, rightOneLength);
         this.rightTwoLength = rightTwoLength;
     }
 
-    public MyArraySizeException(int wrongOneLength, int wrongTwoLength, int rightOneLength) {
-        this(DEFAULT_MESSAGE, wrongOneLength, wrongTwoLength, rightOneLength);
+    public MyArraySizeException(int rightOneLength) {
+        this(DEFAULT_MESSAGE, rightOneLength);
     }
 
-    public MyArraySizeException(int wrongOneLength, int wrongTwoLength, int rightOneLength, int rightTwoLength) {
-        this(DEFAULT_MESSAGE, wrongOneLength, wrongTwoLength, rightOneLength, rightTwoLength);
+    public MyArraySizeException(int rightOneLength, int rightTwoLength) {
+        this(DEFAULT_MESSAGE, rightOneLength, rightTwoLength);
     }
 
     /**
@@ -49,8 +44,7 @@ public class MyArraySizeException extends RuntimeException {
     @Override
     public String getMessage() {
         if (this.message != null) {
-            return this.message + " Резмер введенного массива: " + this.wrongOneLength + "x" + this.wrongTwoLength
-                    + ". Требуется размер: " + this.rightOneLength + "x" + this.rightTwoLength + ".";
+            return this.message + " Резмер введенного массива не соответствует требуему размеру: " + this.rightOneLength + "x" + this.rightTwoLength + ".";
         } else {
             return super.getMessage();
         }
