@@ -2,7 +2,7 @@ package HomeWork5;
 
 public class TestMultiThreading {
 
-    private static final int SIZE = 10000000;
+    private static final int SIZE = 10_000_000;
     private static final int HALF = SIZE / 2;
 
     public static void main(String[] args) {
@@ -26,7 +26,7 @@ public class TestMultiThreading {
         float[] singleThreadArr = createArray(SIZE);
         // Замеряется время и запускается обработка массива
         long a = System.currentTimeMillis();
-        arrayProcessing(singleThreadArr);
+        arrayProcessing(singleThreadArr, 0);
         System.out.printf("Время обработки массива одним потоком: %d милисекунд.\n", (System.currentTimeMillis() - a));
     }
 
@@ -45,8 +45,8 @@ public class TestMultiThreading {
         System.arraycopy(doubleThreadArr, 0, arr1, 0, HALF);
         System.arraycopy(doubleThreadArr, HALF, arr2, 0, HALF);
         // Создание потоков
-        Thread thread1 = new Thread(() -> arrayProcessing(arr1));
-        Thread thread2 = new Thread(() -> arrayProcessing(arr2));
+        Thread thread1 = new Thread(() -> arrayProcessing(arr1,0));
+        Thread thread2 = new Thread(() -> arrayProcessing(arr2, HALF));
         thread1.start();
         thread2.start();
         thread1.join();
@@ -73,18 +73,13 @@ public class TestMultiThreading {
     }
 
     /**
-     * Обработка массива страшной формулой
-     * @param arr - на вход подопытный массив
+     * Метод обработки элементов массива
+     * @param arr - на вход обрабатываемый массив
+     * @param add - добавочная величина индекса для двухпоточной обработки
      */
-    public static void arrayProcessing(float[] arr) {
+    public static void arrayProcessing(float[] arr, int add) {
         for (int i = 0; i < arr.length; i++) {
-            arr[i] = (float) (arr[i] * Math.sin(0.2f + i / 5.0) * Math.cos(0.2f + i / 5.0) * Math.cos(0.4f + i / 2.0));
+            arr[i] = (float) (arr[i] * Math.sin(0.2f + (i + add) / 5.0) * Math.cos(0.2f + (i + add) / 5.0) * Math.cos(0.4f + (i + add) / 2.0));
         }
     }
 }
-
-//    Вывод в консоль:
-//    Начало обработки...
-//    Время обработки массива одним потоком: 4649 милисекунд.
-//    Время обработки массива двумя потоками: 1361 милисекунд.
-//    Обработка завершена.
