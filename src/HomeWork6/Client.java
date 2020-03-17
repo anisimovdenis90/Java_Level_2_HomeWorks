@@ -6,11 +6,12 @@ import java.net.Socket;
 public class Client {
     private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8189;
+    private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
-    private BufferedReader reader;
+    private String name;
 
     public static void main(String[] args) {
         new Client();
@@ -26,66 +27,53 @@ public class Client {
     }
 
     public void openConnection() throws IOException {
-        socket = new Socket(SERVER_ADDR, SERVER_PORT);
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
-        System.out.println("Выходной поток есть");
-        reader = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("reader есть");
+        try {
+            socket = new Socket(SERVER_ADDR, SERVER_PORT);
+            System.out.println("Соединение установлено");
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+            System.out.print("Введите свое имя: ");
+            name = reader.readLine();
+            runInputThread(in);
+            runSendMessage(out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (socket != null) socket.close();
+        }
+    }
+
+    public void runInputThread(DataInputStream in) {
         new Thread(() -> {
             try {
                 while (true) {
                     String messageFromServer = in.readUTF();
-                    if (messageFromServer.equalsIgnoreCase(Server.END_COMMAND)) {
+                    if (messageFromServer.equals(Server.END_COMMAND)) {
+                        System.out.println("Соединение завершено");
+                        System.exit(0);
                         break;
                     }
-                    System.out.println("From server: " + messageFromServer);
+                    System.out.println("Сервер: " + messageFromServer);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Что-то не так");
-                System.out.println("Connection has been closed!");
-            }
-        }).start();
-        new Thread(() -> {
-            try {
-                while (true) {
-
-
-                        String messageToServer = reader.readLine();
-                    while (reader.ready()) {
-                        if (messageToServer.equalsIgnoreCase("/end")) {
-                            closeConnection();
-                            break;
-                        }
-                        sendMessage(messageToServer);
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Connection has been closed!");
             }
         }).start();
     }
 
-    public boolean checkMessage(String message) {
-        return !message.equalsIgnoreCase(Server.END_COMMAND);
-    }
-
-    public void closeConnection() {
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void sendMessage(String message) {
-        if (!message.trim().isEmpty()) {
+    public void runSendMessage(DataOutputStream out) {
+        while (true) {
             try {
-                out.writeUTF(message);
-            } catch (IOException e) {
+                String messageToServer = reader.readLine();
+                if (messageToServer.equals(Server.END_COMMAND)) {
+                    out.writeUTF(messageToServer);
+                    System.exit(0);
+                    break;
+                }
+                out.writeUTF(name + ": " + messageToServer);
+            } catch (Exception e) {
+                System.out.println("Ошибки отправки сообщения");
                 e.printStackTrace();
-                System.err.println("Ошибка отправки сообщения");
             }
         }
     }
