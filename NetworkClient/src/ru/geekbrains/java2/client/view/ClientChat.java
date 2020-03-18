@@ -18,6 +18,7 @@ public class ClientChat extends JFrame {
 
     public ClientChat(ClientController controller) {
         this.controller = controller;
+        // Проблема с Title окна, нет имени пользователя
         setTitle(controller.getUsername());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setSize(640, 480);
@@ -47,6 +48,7 @@ public class ClientChat extends JFrame {
         String message = messageTextField.getText().trim();
         if (message.isEmpty()) {
             return;
+        // Сообщение указанному контакту
         } else if (message.startsWith("/w")) {
             String[] msg = message.split("\\s+", 3);
             String messageToContact = msg[2] + " -> Пользователю: " + msg[1];

@@ -19,6 +19,7 @@ public class BaseAuthService implements AuthService {
         }
     }
 
+    // Список зарегистрированных пользователей
     private static final List<UserData> USER_DATA = List.of(
             new UserData("login1", "pass1", "username1"),
             new UserData("login2", "pass2", "username2"),

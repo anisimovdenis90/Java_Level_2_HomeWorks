@@ -83,7 +83,7 @@ public class ClientHandler {
             if ("/end".equals(message)) {
                 return;
             } else if (message.startsWith("/w")) {
-                // Отправка сообщения контурному контакту
+                // Отправка сообщения указанному контакту
                 // Отделяем имя контакта от сообщения
                 String contactToSendMessage = getStrings(message)[1];
                 String messageToContact = getStrings(message)[2];

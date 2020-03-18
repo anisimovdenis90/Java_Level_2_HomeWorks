@@ -70,6 +70,11 @@ public class NetworkService {
         out.writeUTF(String.format("/auth %s %s", login, password));
     }
 
+    /**
+     * Отправка сообщения клиентом
+     * @param message - текст сообщения
+     * @throws IOException
+     */
     public void sendMessage(String message) throws IOException {
         out.writeUTF(message);
     }

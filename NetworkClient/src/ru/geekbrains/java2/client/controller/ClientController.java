@@ -55,7 +55,9 @@ public class ClientController {
     private void openChat() {
         // Убираем окно авторизации
         authDialog.dispose();
+        // Что-то непонятное...
         networkService.setMessageHandler(clientChat::appendMessage);
+        // Запускаем окно чата
         clientChat.setVisible(true);
     }
 

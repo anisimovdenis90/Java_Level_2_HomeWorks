@@ -75,7 +75,7 @@ public class NetworkServer {
     /**
      * Метод отправки сообщения конкретному пользователю
      * @param message - текст сообщения
-     * @param contactToSendMessage - никнейм контакта, кому отправляется собщение
+     * @param contactToSendMessage - никнейм контакта, кому отправляется сообщение
      * @param fromContact - от кого
      * @throws IOException - пробрасываю исключение
      */
@@ -87,13 +87,17 @@ public class NetworkServer {
         }
     }
 
+    /**
+     * Добавление подключения в список
+     * @param clientHandler - на вход подключение клиента
+     */
     public synchronized void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
     }
 
     /**
-     * Удаление контакта из списка при его отключении
-     * @param clientHandler - подключение конкретного клиента
+     * Удаление подключения из списка
+     * @param clientHandler - подключение клиента
      */
     public synchronized void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
