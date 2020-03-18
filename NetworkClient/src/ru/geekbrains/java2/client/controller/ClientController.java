@@ -38,7 +38,7 @@ public class ClientController {
         }
     }
 
-    private synchronized void runAuthProcess() {
+    private void runAuthProcess() {
         networkService.setSuccessfulAuthEvent(new AuthEvent() {
             @Override
             public void authIsSuccessful(String nickname) {
