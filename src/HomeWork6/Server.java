@@ -11,6 +11,7 @@ public class Server {
     public static ServerSocket serverSocket = null;
     private final ArrayList<Socket> connections = new ArrayList<>();
     private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    private boolean isOutputThreadStart = false;
 
     public static void main(String[] args) throws IOException {
         new Server().startServer();
@@ -21,10 +22,13 @@ public class Server {
             serverSocket = new ServerSocket(8189);
             System.out.println("Сервер запущен, ожидаем подключения...");
             while (true) {
-                connections.add(serverSocket.accept());
+                clientSocket = serverSocket.accept();
+                connections.add(clientSocket);
                 System.out.println("Клиент подключился");
-                runInputThread();
-                runSendMessage();
+                runInputThread(clientSocket);
+                if (!isOutputThreadStart) {
+                    runOutputThread();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -34,7 +38,29 @@ public class Server {
         }
     }
 
-    public void runSendMessage() {
+    public void runInputThread(Socket clientSocket) {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+                    String messageFromClient = in.readUTF();
+                    if (messageFromClient.equals(END_COMMAND)) {
+                        System.out.println("Клиент отключился");
+                        clientSocket.close();
+                        connections.remove(clientSocket);
+                        break;
+                    }
+                    System.out.println(messageFromClient);
+                } catch (Exception e) {
+                    System.out.println("Соединение завершено");
+                    break;
+                }
+            }
+        }).start();
+    }
+
+    public void runOutputThread() {
+        isOutputThreadStart = true;
         new Thread(() -> {
             while (true) {
                 try {
@@ -48,26 +74,5 @@ public class Server {
                 }
             }
         }).start();
-    }
-
-    public void runInputThread() {
-        for (Socket connection : connections) {
-            new Thread(() -> {
-                while (true) {
-                    try {
-                        String messageFromClient = new DataInputStream(connection.getInputStream()).readUTF();
-                        if (messageFromClient.equals(END_COMMAND)) {
-                            System.out.println("Клиент отключился");
-                            connection.close();
-                            break;
-                        }
-                        System.out.println(messageFromClient);
-                    } catch (Exception e) {
-                        System.out.println("Соединение завершено");
-                        break;
-                    }
-                }
-            }).start();
-        }
     }
 }

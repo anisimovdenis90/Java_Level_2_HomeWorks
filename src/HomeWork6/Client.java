@@ -35,7 +35,7 @@ public class Client {
             System.out.print("Введите свое имя: ");
             name = reader.readLine();
             runInputThread(in);
-            runSendMessage(out);
+            runOutputThread(out);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -51,7 +51,6 @@ public class Client {
                     if (messageFromServer.equals(Server.END_COMMAND)) {
                         System.out.println("Соединение завершено");
                         System.exit(0);
-                        break;
                     }
                     System.out.println("Сервер: " + messageFromServer);
                 }
@@ -61,14 +60,13 @@ public class Client {
         }).start();
     }
 
-    public void runSendMessage(DataOutputStream out) {
+    public void runOutputThread(DataOutputStream out) {
         while (true) {
             try {
                 String messageToServer = reader.readLine();
                 if (messageToServer.equals(Server.END_COMMAND)) {
                     out.writeUTF(messageToServer);
                     System.exit(0);
-                    break;
                 }
                 out.writeUTF(name + ": " + messageToServer);
             } catch (Exception e) {
