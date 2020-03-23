@@ -3,7 +3,8 @@ package ru.geekbrains.java2.client.view;
 import ru.geekbrains.java2.client.controller.ClientController;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 public class AuthDialog extends JFrame {
@@ -46,7 +47,7 @@ public class AuthDialog extends JFrame {
             // отправляем сообщение авторизации серверу
             controller.sendAuthMessage(login, pass);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Ошибка при попытке аутентификации");
+            showError("Ошибка при попытке аутентификации");
         }
     }
 
@@ -57,4 +58,7 @@ public class AuthDialog extends JFrame {
         System.exit(0);
     }
 
+    public void showError(String errorMessage) {
+        JOptionPane.showMessageDialog(this, errorMessage);
+    }
 }

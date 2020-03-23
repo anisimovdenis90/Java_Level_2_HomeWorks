@@ -4,6 +4,9 @@ import ru.geekbrains.java2.client.controller.ClientController;
 
 import java.io.IOException;
 
+/**
+ * Обеспечивает запуск клиентского приложения с заданным адресом сервера и портом подключения
+ */
 public class NetworkClient {
 
     public static void main(String[] args) {

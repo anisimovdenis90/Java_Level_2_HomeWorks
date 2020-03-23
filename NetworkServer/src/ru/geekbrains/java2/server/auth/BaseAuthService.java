@@ -43,21 +43,6 @@ public class BaseAuthService implements AuthService {
     }
 
     /**
-     * Метод поиска никнейма среди авторизованных контактов
-     * @param nicknameToCheck - на вход интересующий никнейм
-     * @return - boolean
-     */
-    @Override
-    public boolean checkContact(String nicknameToCheck) {
-        for (UserData userDatum : USER_DATA) {
-            if (userDatum.userName.equals(nicknameToCheck)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Запуск сервиса авторизации
      */
     @Override
