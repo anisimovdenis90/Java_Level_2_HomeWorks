@@ -1,7 +1,10 @@
 package ru.geekbrains.java2.client.model;
 
 import ru.geekbrains.lava2.client.Command;
-import ru.geekbrains.lava2.client.command.*;
+import ru.geekbrains.lava2.client.command.AuthCommand;
+import ru.geekbrains.lava2.client.command.ErrorCommand;
+import ru.geekbrains.lava2.client.command.MessageCommand;
+import ru.geekbrains.lava2.client.command.UpdateUsersListCommand;
 import ru.geekbrains.java2.client.controller.AuthEvent;
 import ru.geekbrains.java2.client.controller.ClientController;
 import ru.geekbrains.java2.client.controller.MessageHandler;
@@ -74,18 +77,8 @@ public class NetworkService {
                             }
                             break;
                         }
-                        case TIMEOUT_MESSAGE: {
-                            BroadcastMessageCommand commandData = (BroadcastMessageCommand) command.getData();
-                            controller.updateTimeoutLabel(commandData.getMessage());
-                            break;
-                        }
-                        case TIMEOUT_AUTH_ERROR: {
-                            ErrorCommand commandData = (ErrorCommand) command.getData();
-                            controller.showErrorAndClose(commandData.getErrorMessage());
-                            break;
-                        }
-                        case ERROR:
-                        case AUTH_ERROR: {
+                        case AUTH_ERROR:
+                        case ERROR: {
                             ErrorCommand commandData = (ErrorCommand) command.getData();
                             controller.showErrorMessage(commandData.getErrorMessage());
                             break;
