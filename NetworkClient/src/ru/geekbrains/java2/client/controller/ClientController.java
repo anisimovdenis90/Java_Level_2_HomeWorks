@@ -4,6 +4,7 @@ import ru.geekbrains.java2.client.model.NetworkService;
 import ru.geekbrains.java2.client.view.AuthDialog;
 import ru.geekbrains.java2.client.view.ClientChat;
 import ru.geekbrains.lava2.client.Command;
+import ru.geekbrains.lava2.client.command.BroadcastMessageCommand;
 
 import java.io.IOException;
 import java.util.List;
@@ -163,6 +164,10 @@ public class ClientController {
         }
     }
 
+    public void showErrorAndClose(String errorMessage) {
+        authDialog.showErrorAndClose(errorMessage);
+    }
+
     /**
      * метод обновления списка пользователей
      *
@@ -174,5 +179,9 @@ public class ClientController {
         // Добавляем строку 'отправить всем'
         users.add(0, "All");
         clientChat.updateUsers(users);
+    }
+
+    public void updateTimeoutLabel(String message) {
+        authDialog.updateTimeOutAuthLabel(message);
     }
 }

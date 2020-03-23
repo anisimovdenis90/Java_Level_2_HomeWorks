@@ -13,6 +13,7 @@ public class AuthDialog extends JFrame {
     private JButton buttonCancel;
     private JTextField loginText;
     private JPasswordField passwordText;
+    private JLabel timeOutAuth;
 
     private ClientController controller;
 
@@ -58,7 +59,33 @@ public class AuthDialog extends JFrame {
         System.exit(0);
     }
 
+    /**
+     * Отображение окна с описанием ошибки
+     * @param errorMessage - текст ошибки
+     */
     public void showError(String errorMessage) {
-        JOptionPane.showMessageDialog(this, errorMessage);
+        JOptionPane.showMessageDialog(this, errorMessage, "Ошибка!", JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Отображает ошибку и закрывает клиент
+     * @param errorMessage - текст ошибки
+     */
+    public void showErrorAndClose(String errorMessage) {
+        showError(errorMessage);
+        onCancel();
+    }
+
+    /**
+     * Таймер времени авторизации клиента
+     * @param seconds - остаток времени в секундах
+     */
+    public void updateTimeOutAuthLabel(String seconds) {
+        SwingUtilities.invokeLater(() -> {
+            if (!timeOutAuth.isEnabled()) {
+                timeOutAuth.setEnabled(true);
+            }
+            timeOutAuth.setText("Лимит времени авторизации: " + seconds + " сек.");
+        });
     }
 }

@@ -87,7 +87,7 @@ public class ClientChat extends JFrame {
      * @param message - описание ошибки
      */
     public void showError(String message) {
-        JOptionPane.showMessageDialog(this, message);
+        JOptionPane.showMessageDialog(this, message, "Ошибка!", JOptionPane.ERROR_MESSAGE);
     }
 
     /**
