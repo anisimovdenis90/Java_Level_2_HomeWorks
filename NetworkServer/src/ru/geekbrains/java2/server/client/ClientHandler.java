@@ -1,18 +1,24 @@
 package ru.geekbrains.java2.server.client;
 
+import ru.geekbrains.lava2.client.Command;
+import ru.geekbrains.lava2.client.CommandType;
+import ru.geekbrains.lava2.client.command.AuthCommand;
+import ru.geekbrains.lava2.client.command.BroadcastMessageCommand;
+import ru.geekbrains.lava2.client.command.PrivateMessageCommand;
 import ru.geekbrains.java2.server.NetworkServer;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.Socket;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class ClientHandler {
 
     private final NetworkServer networkServer;
     private final Socket clientSocket;
-    private DataInputStream in;
-    private DataOutputStream out;
+
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
 
     private String nickname;
 
@@ -23,6 +29,7 @@ public class ClientHandler {
 
     /**
      * Получение никнейма подключенного контакта
+     *
      * @return - String никнейм контакта
      */
     public String getNickname() {
@@ -39,15 +46,15 @@ public class ClientHandler {
     private void startHandler() {
         try {
             // Создаем потоки обмена информацией
-            in = new DataInputStream(clientSocket.getInputStream());
-            out = new DataOutputStream(clientSocket.getOutputStream());
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
             // Запускаем в отдельном потоке чтение сообщений от клиента
             new Thread(() -> {
                 try {
                     authentication();
-                    readMessage();
+                    readMessages();
                 } catch (IOException e) {
-                    System.out.printf("Соединение с клиентом %s закрыто", nickname);
+                    System.out.printf("Соединение с клиентом %s закрыто!", nickname);
                     System.out.println();
                 } finally {
                     closeConnection();
@@ -63,9 +70,9 @@ public class ClientHandler {
      * Закрытие соединения с сервером
      */
     private void closeConnection() {
-        // Передаем экземпляр подключения конкретного клиента
-        networkServer.unsubscribe(this);
         try {
+            // Передаем экземпляр подключения конкретного клиента
+            networkServer.unsubscribe(this);
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,78 +80,121 @@ public class ClientHandler {
     }
 
     /**
-     * Чтение сообщения от клиента
-     * @throws IOException - пробрасываем исключение метода readUTF
-     */
-    private void readMessage() throws IOException {
-        while (true) {
-            String message = in.readUTF();
-            // Завершаем подключение, если введена соответствующая команда
-            if ("/end".equals(message)) {
-                return;
-            } else if (message.startsWith("/w")) {
-                // Отправка сообщения указанному контакту
-                // Отделяем имя контакта от сообщения
-                String contactToSendMessage = getStrings(message)[1];
-                String messageToContact = getStrings(message)[2];
-                if (networkServer.getAuthService().checkContact(contactToSendMessage)) {
-                    System.out.printf("From %s To %s: %s", nickname, contactToSendMessage, messageToContact + System.lineSeparator());
-                    networkServer.sendMessageToContact(messageToContact, contactToSendMessage, nickname);
-                } else {
-                    sendMessage(String.format("Контакта с именем %s не существует!", contactToSendMessage));
-                }
-            } else {
-                // Отправка сообщения остальным контактам
-                System.out.printf("От %s: %s", nickname, message + System.lineSeparator());
-                networkServer.broadcastMessage(nickname + ": " + message, this);
-            }
-        }
-    }
-
-
-    /**
      * Авторизация контакта на сервере
+     *
      * @throws IOException - пробрасываем исключение метода readUTF
      */
     private void authentication() throws IOException {
         while (true) {
-            String message = in.readUTF();
-            // "/auth login password"
-            if (message.startsWith("/auth")) {
-                // Получаем из сообщения логин и пароль
-                String login = getStrings(message)[1];
-                String password = getStrings(message)[2];
-                // Получаем никнейм авторизованного пользователя, если данные верны
-                String username = networkServer.getAuthService().getUsernameByLoginAndPassword(login, password);
-                if (username == null) {
-                    sendMessage("Отсутствует учетная запись по данному логину и паролю!");
-                } else {
-                    nickname = username;
-                    networkServer.broadcastMessage(nickname + " зашел в чат!", this);
-                    // Отправляем отклик авторизации клиенту
-                    sendMessage("/auth " + nickname);
-                    networkServer.subscribe(this);
-                    break;
+            Command command = readCommand();
+            if (command == null) {
+                continue;
+            }
+            if (command.getType() == CommandType.AUTH) {
+                boolean successfulAuth = processAuthCommand(command);
+                if (successfulAuth) {
+                    return;
                 }
+            } else {
+                System.err.println("Неверный тип команды процесса авторизации: " + command.getType());
             }
         }
     }
 
     /**
-     * Получение массива строк из сообщения
-     * @param message - сообщения от контакта
-     * @return - массив строк
+     * Метод обработки команды авторизации
+     *
+     * @param command - команда авторизации
+     * @return - boolean
+     * @throws IOException - пробрасывается исключение
      */
-    private String[] getStrings(String message) {
-        return message.split("\\s+", 3);
+    private boolean processAuthCommand(Command command) throws IOException {
+        AuthCommand commandData = (AuthCommand) command.getData();
+        // Получаем из сообщения логин и пароль
+        String login = commandData.getLogin();
+        String password = commandData.getPassword();
+        // Получаем никнейм авторизованного пользователя
+        String username = networkServer.getAuthService().getUsernameByLoginAndPassword(login, password);
+        // Если никнейм отсутствует
+        if (username == null) {
+            Command authErrorCommand = Command.authErrorCommand("Отсутствует учетная запись по данному логину и паролю!");
+            sendMessage(authErrorCommand);
+            return false;
+        }
+        // Если никнейм уже используется
+        else if (networkServer.isNicknameBusy(username)) {
+            Command authErrorCommand = Command.authErrorCommand("Данный пользователь уже авторизован!");
+            sendMessage(authErrorCommand);
+            return false;
+        } else {
+            nickname = username;
+            System.out.printf("Клиент %s авторизовался" + System.lineSeparator(), nickname);
+            String message = nickname + " зашел в чат!";
+            networkServer.broadcastMessage(Command.messageCommand(null, message), this);
+            // Отправляем отклик авторизации клиенту
+            commandData.setUsername(nickname);
+            sendMessage(command);
+            networkServer.subscribe(this);
+            return true;
+        }
     }
 
     /**
-     * Отправка сообщения от текущего контакта
-     * @param message - текст сообщения
-     * @throws IOException - пробрасываем исключение
+     * Чтение сообщения от клиента
+     *
+     * @throws IOException - пробрасываем исключение метода readUTF
      */
-    public void sendMessage(String message) throws IOException {
-        out.writeUTF(message);
+    private void readMessages() throws IOException {
+        while (true) {
+            Command command = readCommand();
+            if (command == null) {
+                continue;
+            }
+            switch (command.getType()) {
+                case END: {
+                    System.out.println("Получена команда 'END'");
+                    String message = nickname + " вышел из чата!";
+                    networkServer.broadcastMessage(Command.messageCommand(null, message), this);
+                    return;
+                }
+                case PRIVATE_MESSAGE: {
+                    PrivateMessageCommand commandData = (PrivateMessageCommand) command.getData();
+                    String receiver = commandData.getReceiver();
+                    String message = commandData.getMessage();
+                    networkServer.sendPrivateMessage(receiver, Command.messageCommand(nickname, message));
+                    break;
+                }
+                case BROADCAST_MESSAGE: {
+                    BroadcastMessageCommand commandData = (BroadcastMessageCommand) command.getData();
+                    String message = commandData.getMessage();
+                    networkServer.broadcastMessage(Command.messageCommand(nickname, message), this);
+                    break;
+                }
+                default:
+                    System.err.println("Неверный тип команды: " + command.getType());
+            }
+        }
+    }
+
+    /**
+     * чтение данных от клиента
+     *
+     * @return - возвращает полученную команду, или null в случае ошибки
+     * @throws IOException - пробрасывается исключение
+     */
+    private Command readCommand() throws IOException {
+        try {
+            return (Command) in.readObject();
+        } catch (ClassNotFoundException e) {
+            String errorMessage = "Неизвестный тип объекта от клиента";
+            System.err.println(errorMessage);
+            e.printStackTrace();
+            sendMessage(Command.errorCommand(errorMessage));
+            return null;
+        }
+    }
+
+    public void sendMessage(Command command) throws IOException {
+        out.writeObject(command);
     }
 }

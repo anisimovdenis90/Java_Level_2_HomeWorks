@@ -1,5 +1,6 @@
 package ru.geekbrains.java2.server;
 
+import ru.geekbrains.lava2.client.Command;
 import ru.geekbrains.java2.server.auth.AuthService;
 import ru.geekbrains.java2.server.auth.BaseAuthService;
 import ru.geekbrains.java2.server.client.ClientHandler;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class NetworkServer {
@@ -34,7 +36,7 @@ public class NetworkServer {
                 System.out.println("Ожидание подключения клиента...");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Клиент подключился");
-                //  Добавляем подключение в список
+                //  Создаем обработчик клиента
                 createClientHandler(clientSocket);
             }
         } catch (IOException e) {
@@ -53,6 +55,7 @@ public class NetworkServer {
 
     /**
      * Возвращает сервис авторизации из конструктора сетевого сервера
+     *
      * @return - AuthService - сервис авторизации
      */
     public AuthService getAuthService() {
@@ -61,10 +64,11 @@ public class NetworkServer {
 
     /**
      * Отправка сообщения всем подключенным клиентам
+     *
      * @param message - String сообщения для отправки
      * @throws IOException - пробрасываем исключение
      */
-    public synchronized void broadcastMessage(String message, ClientHandler owner) throws IOException {
+    public synchronized void broadcastMessage(Command message, ClientHandler owner) throws IOException {
         for (ClientHandler client : clients) {
             if (client != owner) {
                 client.sendMessage(message);
@@ -74,32 +78,70 @@ public class NetworkServer {
 
     /**
      * Метод отправки сообщения конкретному пользователю
-     * @param message - текст сообщения
-     * @param contactToSendMessage - никнейм контакта, кому отправляется сообщение
-     * @param fromContact - от кого
-     * @throws IOException - пробрасываю исключение
+     *
+     * @param receiver       - никнейм контакта, кому отправляется сообщение
+     * @param commandMessage - объект с сообщением и ником отправителя
+     * @throws IOException - пробрасываем исключение
      */
-    public synchronized void sendMessageToContact(String message, String contactToSendMessage, String fromContact) throws IOException {
+    public synchronized void sendPrivateMessage(String receiver, Command commandMessage) throws IOException {
         for (ClientHandler client : clients) {
-            if (client.getNickname().equals(contactToSendMessage)) {
-                client.sendMessage(String.format("От %s: %s", fromContact, message));
+            if (client.getNickname().equals(receiver)) {
+                client.sendMessage(commandMessage);
+                break;
             }
         }
     }
 
     /**
      * Добавление подключения в список
+     *
      * @param clientHandler - на вход подключение клиента
      */
-    public synchronized void subscribe(ClientHandler clientHandler) {
+    public synchronized void subscribe(ClientHandler clientHandler) throws IOException {
         clients.add(clientHandler);
+        List<String> users = getAllUsernames();
+        broadcastMessage(Command.updateUsersListCommand(users), null);
     }
 
     /**
      * Удаление подключения из списка
+     *
      * @param clientHandler - подключение клиента
      */
-    public synchronized void unsubscribe(ClientHandler clientHandler) {
+    public synchronized void unsubscribe(ClientHandler clientHandler) throws IOException {
         clients.remove(clientHandler);
+        List<String> users = getAllUsernames();
+        broadcastMessage(Command.updateUsersListCommand(users), null);
+    }
+
+    /**
+     * Метод возвращает коллекцию подключенных к серверу пользователей
+     *
+     * @return - List пользователей
+     */
+    private List<String> getAllUsernames() {
+//        return clients.stream()
+//                .map(client -> client.getNickname())
+//                .collect(Collectors.toList());
+        List<String> usernames = new LinkedList<>();
+        for (ClientHandler client : clients) {
+            usernames.add(client.getNickname());
+        }
+        return usernames;
+    }
+
+    /**
+     * Проверка на использование никнейма
+     *
+     * @param username - проверяемый никнейма
+     * @return - boolean
+     */
+    public boolean isNicknameBusy(String username) {
+        for (ClientHandler client : clients) {
+            if (client.getNickname().equals(username)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

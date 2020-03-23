@@ -5,21 +5,20 @@ import ru.geekbrains.java2.client.controller.ClientController;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 public class ClientChat extends JFrame {
 
     private JPanel mainPanel;
-    private JList<String> userList;
+    private JList<String> usersList;
     private JTextField messageTextField;
     private JButton sendButton;
     private JTextArea chatText;
-
+    // Ссылка на контроллер
     private ClientController controller;
 
     public ClientChat(ClientController controller) {
         this.controller = controller;
-        // Проблема с Title окна, нет имени пользователя
-        setTitle(controller.getUsername());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setSize(640, 480);
         setLocationRelativeTo(null);
@@ -28,6 +27,7 @@ public class ClientChat extends JFrame {
         // При закрытии окна отключаем клиента от сервера
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
+                controller.sendEndMessage();
                 controller.shutdown();
             }
         });
@@ -48,20 +48,26 @@ public class ClientChat extends JFrame {
         String message = messageTextField.getText().trim();
         if (message.isEmpty()) {
             return;
-        // Сообщение указанному контакту
-        } else if (message.startsWith("/w")) {
-            String[] msg = message.split("\\s+", 3);
-            String messageToContact = msg[2] + " -> Пользователю: " + msg[1];
-            appendOwnMessage(messageToContact);
-        } else {
-            appendOwnMessage(message);
         }
-            controller.sendMessage(message);
-            messageTextField.setText(null);
+        // Отображаем набранное сообщение в окне чата
+        appendOwnMessage(message);
+
+        // Отправка сообщения всем
+        if (usersList.getSelectedIndex() < 1) {
+            controller.sendMessageToAllUsers(message);
+        }
+        // Отправка сообщения выбранному контакту
+        else {
+            String username = usersList.getSelectedValue();
+            controller.sendPrivateMessage(username, message);
+        }
+        // Очищаем окно ввода текста после отправки сообщения
+        messageTextField.setText(null);
     }
 
     /**
      * Метод обновления окна чата в отдельном потоке
+     *
      * @param message - текст полученного сообщения
      */
     public void appendMessage(String message) {
@@ -73,5 +79,27 @@ public class ClientChat extends JFrame {
 
     private void appendOwnMessage(String message) {
         appendMessage("Я: " + message);
+    }
+
+    /**
+     * Отображает предупреждающее окно
+     *
+     * @param message - описание ошибки
+     */
+    public void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Ошибка!", JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Обновление списка контактов
+     *
+     * @param users - на вход коллекция контактов
+     */
+    public void updateUsers(List<String> users) {
+        SwingUtilities.invokeLater(() -> {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            model.addAll(users);
+            usersList.setModel(model);
+        });
     }
 }
