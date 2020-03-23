@@ -164,6 +164,14 @@ public class ClientController {
     }
 
     /**
+     * Отображает ошибку и закрывает клиент
+     * @param errorMessage - текст ошибки
+     */
+    public void showErrorAndClose(String errorMessage) {
+        authDialog.showErrorAndClose(errorMessage);
+    }
+
+    /**
      * метод обновления списка пользователей
      *
      * @param users - список
@@ -174,5 +182,13 @@ public class ClientController {
         // Добавляем строку 'отправить всем'
         users.add(0, "All");
         clientChat.updateUsers(users);
+    }
+
+    /**
+     * Обновление таймера времени авторизации
+     * @param message - оставшееся время в секундах
+     */
+    public void updateTimeoutLabel(String message) {
+        authDialog.updateTimeOutAuthLabel(message);
     }
 }

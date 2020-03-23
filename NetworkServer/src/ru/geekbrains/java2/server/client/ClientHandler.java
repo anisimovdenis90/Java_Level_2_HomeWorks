@@ -22,6 +22,8 @@ public class ClientHandler {
 
     private String nickname;
 
+    public boolean successfulAuth = false;
+
     public ClientHandler(NetworkServer networkServer, Socket socket) {
         this.networkServer = networkServer;
         this.clientSocket = socket;
@@ -85,20 +87,53 @@ public class ClientHandler {
      * @throws IOException - пробрасываем исключение метода readUTF
      */
     private void authentication() throws IOException {
+        runTimeOutAuthThread();
         while (true) {
             Command command = readCommand();
             if (command == null) {
                 continue;
             }
             if (command.getType() == CommandType.AUTH) {
-                boolean successfulAuth = processAuthCommand(command);
+                successfulAuth = processAuthCommand(command);
                 if (successfulAuth) {
-                    return;
+                   return;
                 }
             } else {
                 System.err.println("Неверный тип команды процесса авторизации: " + command.getType());
             }
         }
+    }
+
+    /**
+     * Запускает поток лимита времени авторизации клиента
+     */
+    private void runTimeOutAuthThread() {
+        System.out.println("Ожидание авторизации клиента...");
+        new Thread(() -> {
+            try {
+//                Thread.sleep(120_000);
+                // Отправляет время в окно авторизации
+                for (int i = 120; i > 0; i--) {
+                    Command timeoutAuthMessageCommand = Command.timeoutAuthMessageCommand("" + i);
+                    sendMessage(timeoutAuthMessageCommand);
+                    Thread.sleep(1_000);
+                    // Заранее выходим из цикла при успешной авторизации
+                    if (successfulAuth)
+                        break;
+                }
+                // Если клиент не авторизовался, закрывается соединение
+                if (!successfulAuth) {
+                    System.out.println("Истекло время авторизации, клиент отключен");
+                    Command timeOutAuthErrorCommand = Command.timeoutAuthErrorCommand("Истекло время авторизации, соединение закрыто!");
+                    sendMessage(timeOutAuthErrorCommand);
+                    closeConnection();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("Авторизация не выполнена, закрыто соединение с клиентом");
+            }
+        }).start();
     }
 
     /**
@@ -128,6 +163,7 @@ public class ClientHandler {
             return false;
         } else {
             nickname = username;
+            System.out.printf("Клиент %s авторизовался" + System.lineSeparator(), nickname);
             String message = nickname + " зашел в чат!";
             networkServer.broadcastMessage(Command.messageCommand(null, message), this);
             // Отправляем отклик авторизации клиенту
@@ -150,9 +186,12 @@ public class ClientHandler {
                 continue;
             }
             switch (command.getType()) {
-                case END:
+                case END: {
                     System.out.println("Получена команда 'END'");
+                    String message = nickname + " вышел из чата!";
+                    networkServer.broadcastMessage(Command.messageCommand(null, message), this);
                     return;
+                }
                 case PRIVATE_MESSAGE: {
                     PrivateMessageCommand commandData = (PrivateMessageCommand) command.getData();
                     String receiver = commandData.getReceiver();

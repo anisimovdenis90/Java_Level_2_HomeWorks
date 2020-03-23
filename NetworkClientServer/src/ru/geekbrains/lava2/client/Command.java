@@ -32,6 +32,13 @@ public class Command implements Serializable {
         return command;
     }
 
+    public static Command timeoutAuthErrorCommand(String errorMessage) {
+        Command command = new Command();
+        command.type = CommandType.TIMEOUT_AUTH_ERROR;
+        command.data = new ErrorCommand(errorMessage);
+        return command;
+    }
+
     public static Command errorCommand(String errorMessage) {
         Command command = new Command();
         command.type = CommandType.ERROR;
@@ -43,6 +50,13 @@ public class Command implements Serializable {
         Command command = new Command();
         command.type = CommandType.MESSAGE;
         command.data = new MessageCommand(username, message);
+        return command;
+    }
+
+    public static Command timeoutAuthMessageCommand(String message) {
+        Command command = new Command();
+        command.type = CommandType.TIMEOUT_MESSAGE;
+        command.data = new BroadcastMessageCommand(message);
         return command;
     }
 
