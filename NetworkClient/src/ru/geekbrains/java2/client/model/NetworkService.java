@@ -1,10 +1,7 @@
 package ru.geekbrains.java2.client.model;
 
 import ru.geekbrains.lava2.client.Command;
-import ru.geekbrains.lava2.client.command.AuthCommand;
-import ru.geekbrains.lava2.client.command.ErrorCommand;
-import ru.geekbrains.lava2.client.command.MessageCommand;
-import ru.geekbrains.lava2.client.command.UpdateUsersListCommand;
+import ru.geekbrains.lava2.client.command.*;
 import ru.geekbrains.java2.client.controller.AuthEvent;
 import ru.geekbrains.java2.client.controller.ClientController;
 import ru.geekbrains.java2.client.controller.MessageHandler;

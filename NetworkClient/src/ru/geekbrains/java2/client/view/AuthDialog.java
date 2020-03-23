@@ -58,7 +58,11 @@ public class AuthDialog extends JFrame {
         System.exit(0);
     }
 
+    /**
+     * Отображение окна с описанием ошибки
+     * @param errorMessage - текст ошибки
+     */
     public void showError(String errorMessage) {
-        JOptionPane.showMessageDialog(this, errorMessage);
+        JOptionPane.showMessageDialog(this, errorMessage, "Ошибка!", JOptionPane.ERROR_MESSAGE);
     }
 }

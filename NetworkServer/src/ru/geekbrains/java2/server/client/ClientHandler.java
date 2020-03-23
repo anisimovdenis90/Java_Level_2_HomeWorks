@@ -128,6 +128,7 @@ public class ClientHandler {
             return false;
         } else {
             nickname = username;
+            System.out.printf("Клиент %s авторизовался" + System.lineSeparator(), nickname);
             String message = nickname + " зашел в чат!";
             networkServer.broadcastMessage(Command.messageCommand(null, message), this);
             // Отправляем отклик авторизации клиенту
@@ -150,9 +151,12 @@ public class ClientHandler {
                 continue;
             }
             switch (command.getType()) {
-                case END:
+                case END: {
                     System.out.println("Получена команда 'END'");
+                    String message = nickname + " вышел из чата!";
+                    networkServer.broadcastMessage(Command.messageCommand(null, message), this);
                     return;
+                }
                 case PRIVATE_MESSAGE: {
                     PrivateMessageCommand commandData = (PrivateMessageCommand) command.getData();
                     String receiver = commandData.getReceiver();
